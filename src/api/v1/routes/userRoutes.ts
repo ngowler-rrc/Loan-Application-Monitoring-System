@@ -1,4 +1,7 @@
 import express, { Router } from "express";
+import {
+    getAllLoans,
+} from "../controllers/userController";
 
 const router: Router = express.Router();
 
@@ -14,7 +17,7 @@ router.put(
 
 router.get(
     "/",
-    getUserDetails
+    getAllLoans
 );
 
 router.put(
