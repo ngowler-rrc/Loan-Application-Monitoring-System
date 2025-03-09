@@ -1,31 +1,15 @@
 import express, { Router } from "express";
-import {
-    applyForLoan,
-    reviewLoan,
-    getAllLoans,
-    approveLoan,
-} from "../controllers/userController";
+import { getUserDetails } from "../controllers/userController";
+//import authenticate from "../middleware/authenticate";
+//import isAuthorized from "../middleware/authorize";
 
 const router: Router = express.Router();
 
-router.post(
-    "/",
-    applyForLoan
-);
-
-router.put(
-    "/:id/review",
-    reviewLoan
-);
-
 router.get(
-    "/",
-    getAllLoans
-);
-
-router.put(
-    "/:id/approve",
-    approveLoan
+    "/:uid",
+    //authenticate,
+    //isAuthorized({ hasRole: ["admin"], allowSameUser: true }),
+    getUserDetails
 );
 
 export default router;
