@@ -4,6 +4,7 @@ import { successResponse } from "../models/responseModel";
 import { LOAN_STATUS } from "../../../constants/loanConstants";
 import { HTTP_STATUS } from "../../../constants/httpConstants";
 import { v4 as uuidv4 } from 'uuid';
+import { firestore } from 'firebase-admin';
 import {
     getDocuments,
     createDocument,
@@ -11,7 +12,7 @@ import {
     getDocumentById,
 } from "../repositories/firestoreRepository";
 
-const COLLECTION = "loans";
+const COLLECTION: string = "loans";
 
 /**
  * @description Creates a new loan application, stores it in the Firestore collection, and returns the created loan object.
@@ -87,8 +88,9 @@ export const reviewLoan = async (
 };
 
 /**
- * @description Retrieves all loans from the Firestore collection and sends them in the HTTP response.
+ * @description Retrieves loans from the Firestore collection, optionally filtered by status, and sends them in the HTTP response.
  * @route GET /
+ * @query {string} [status] - Optional status filter to retrieve loans with a specific status.
  * @returns {Promise<void>} A promise that resolves when the response is sent.
  */
 export const getAllLoans = async (
@@ -97,9 +99,16 @@ export const getAllLoans = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const snapshot: FirebaseFirestore.QuerySnapshot = await getDocuments(
-            COLLECTION
-        );
+        const { status } = req.query;
+
+        let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> =
+            firestore().collection(COLLECTION);
+
+        if (status) {
+            query = query.where('status', '==', status);
+        }
+
+        const snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData> = await query.get();
         const loans = snapshot.docs.map((doc) => {
             const data: FirebaseFirestore.DocumentData = doc.data();
             return { id: doc.id, ...data };
