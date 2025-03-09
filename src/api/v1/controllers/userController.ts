@@ -3,10 +3,8 @@ import { Loan } from "../models/loanModel";
 import { successResponse } from "../models/responseModel";
 import { LOAN_STATUS } from "../../../constants/loanConstants";
 import { HTTP_STATUS } from "../../../constants/httpConstants";
-import { v4 as uuidv4 } from 'uuid';
 import { firestore } from 'firebase-admin';
 import {
-    getDocuments,
     createDocument,
     updateDocument,
     getDocumentById,
@@ -39,8 +37,8 @@ export const applyForLoan = async (
             throw new Error("All required fields must be provided");
         }
 
-        const loanData: Loan = {
-            id: uuidv4(),
+        // Prepare loan data (without `id`)
+        const loanData: Omit<Loan, 'id'> = {
             borrowerName,
             borrowerEmail,
             loanAmount,
@@ -51,10 +49,14 @@ export const applyForLoan = async (
             interestRate
         };
 
-        await createDocument(COLLECTION, loanData);
+        // Let Firestore handle ID generation
+        const id = await createDocument(COLLECTION, loanData);
+
+        // Add the generated ID to the loan data
+        const responseLoanData = { id, ...loanData };
 
         res.status(HTTP_STATUS.CREATED).json(
-            successResponse(loanData, "Loan Application Created")
+            successResponse(responseLoanData, "Loan Application Created")
         );
     } catch (error) {
         next(error);
@@ -63,7 +65,7 @@ export const applyForLoan = async (
 
 /**
  * @description Marks a loan application as "under review" by updating its status in Firestore.
- * @route PUT /:uid/review
+ * @route PUT /:id/review
  * @returns {Promise<void>} A promise that resolves when the loan is updated.
  */
 export const reviewLoan = async (
@@ -72,11 +74,11 @@ export const reviewLoan = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { uid } = req.params;
+        const { id } = req.params;
 
-        await updateDocument(COLLECTION, uid, { status: LOAN_STATUS.UNDER_REVIEW });
+        await updateDocument(COLLECTION, id, { status: LOAN_STATUS.UNDER_REVIEW });
 
-        const updatedLoanDoc = await getDocumentById(COLLECTION, uid);
+        const updatedLoanDoc = await getDocumentById(COLLECTION, id);
         const updatedLoan: Loan = updatedLoanDoc.data() as Loan;
 
         res.status(HTTP_STATUS.OK).json(
@@ -124,7 +126,7 @@ export const getAllLoans = async (
 
 /**
  * @description Approves a loan application by updating its status in Firestore.
- * @route PUT /:uid/approve
+ * @route PUT /:id/approve
  * @returns {Promise<void>} A promise that resolves when the loan is approved.
  */
 export const approveLoan = async (
@@ -133,11 +135,11 @@ export const approveLoan = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { uid } = req.params;
+        const { id } = req.params;
 
-        await updateDocument(COLLECTION, uid, { status: LOAN_STATUS.APPROVED });
+        await updateDocument(COLLECTION, id, { status: LOAN_STATUS.APPROVED });
 
-        const updatedLoanDoc = await getDocumentById(COLLECTION, uid);
+        const updatedLoanDoc = await getDocumentById(COLLECTION, id);
         const updatedLoan: Loan = updatedLoanDoc.data() as Loan;
 
         res.status(HTTP_STATUS.OK).json(

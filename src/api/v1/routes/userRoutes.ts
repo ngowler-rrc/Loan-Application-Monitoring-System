@@ -14,7 +14,7 @@ router.post(
 );
 
 router.put(
-    "/:uid/review",
+    "/:id/review",
     reviewLoan
 );
 
@@ -24,7 +24,7 @@ router.get(
 );
 
 router.put(
-    "/:uid/approve",
+    "/:id/approve",
     approveLoan
 );
 
