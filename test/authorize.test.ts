@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import isAuthorized from "../src/api/v1/middleware/authorize";
 import { AuthorizationError } from "../src/api/v1/errors/errors";
+import authenticate from "../src/api/v1/middleware/authenticate";
+import { auth } from "../config/firebaseConfig";
+
 
 describe("isAuthorized middleware", () => {
     let mockRequest: Partial<Request>;
@@ -18,7 +21,6 @@ describe("isAuthorized middleware", () => {
     });
 
     it("should call next() when user has required role", () => {
-        // Arrange
         mockResponse.locals = {
             uid: "user123",
             role: "admin",
@@ -26,19 +28,16 @@ describe("isAuthorized middleware", () => {
 
         const middleware = isAuthorized({ hasRole: ["admin", "manager"] });
 
-        // Act
         middleware(
             mockRequest as Request,
             mockResponse as Response,
             nextFunction
         );
 
-        // Assert
         expect(nextFunction).toHaveBeenCalled();
     });
 
     it("should call next() when same user and allowSameUser is true", () => {
-        // Arrange
         mockRequest.params = { id: "user123" };
         mockResponse.locals = {
             uid: "user123",
@@ -50,14 +49,109 @@ describe("isAuthorized middleware", () => {
             allowSameUser: true,
         });
 
-        // Act
         middleware(
             mockRequest as Request,
             mockResponse as Response,
             nextFunction
         );
 
-        // Assert
         expect(nextFunction).toHaveBeenCalled();
     });
+
+    it("should call next() with AuthorizationError when no role is found in locals", () => {
+        mockResponse.locals = {
+            uid: "user123",
+        };
+    
+        const middleware = isAuthorized({ hasRole: ["admin"] });
+    
+        middleware(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(
+            new AuthorizationError("Forbidden: No role found", "ROLE_NOT_FOUND")
+        );
+    });
+    
+    it("should call next() with AuthorizationError when user does not have a sufficient role", () => {
+        mockResponse.locals = {
+            uid: "user123",
+            role: "user",
+        };
+    
+        const middleware = isAuthorized({ hasRole: ["admin", "manager"] });
+    
+        middleware(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(
+            new AuthorizationError("Forbidden: Insufficient role", "INSUFFICIENT_ROLE")
+        );
+    });
+    
+    it("should call next() when allowSameUser is true and user ID does not match", () => {
+        mockRequest.params = { id: "user456" };
+        mockResponse.locals = {
+            uid: "user123",
+            role: "user",
+        };
+    
+        const middleware = isAuthorized({
+            hasRole: ["admin"],
+            allowSameUser: true,
+        });
+    
+        middleware(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(
+            new AuthorizationError("Forbidden: Insufficient role", "INSUFFICIENT_ROLE")
+        );
+    });
+    
+    it("should handle missing uid in request params gracefully", () => {
+        mockRequest.params = {};
+        mockResponse.locals = {
+            uid: "user123",
+            role: "user",
+        };
+    
+        const middleware = isAuthorized({ hasRole: ["admin"], allowSameUser: true });
+    
+        middleware(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(
+            new AuthorizationError("Forbidden: Insufficient role", "INSUFFICIENT_ROLE")
+        );
+    });
+    
+    it("should call next() when no roles are specified and allowSameUser is true with matching uid", () => {
+        mockRequest.params = { id: "user123" };
+        mockResponse.locals = {
+            uid: "user123",
+        };
+    
+        const middleware = isAuthorized({ allowSameUser: true, hasRole: [] });
+    
+        middleware(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalled();
+    });    
 });
