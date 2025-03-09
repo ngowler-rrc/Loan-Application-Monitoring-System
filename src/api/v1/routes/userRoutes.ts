@@ -1,13 +1,16 @@
 import express, { Router } from "express";
 import {
+    applyForLoan,
+    reviewLoan,
     getAllLoans,
+    approveLoan,
 } from "../controllers/userController";
 
 const router: Router = express.Router();
 
 router.post(
     "/",
-    createNewLoan
+    applyForLoan
 );
 
 router.put(
