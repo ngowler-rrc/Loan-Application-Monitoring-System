@@ -90,4 +90,111 @@ describe("authenticate middleware", () => {
         });
         expect(nextFunction).toHaveBeenCalled();
     });
+
+    it("should call next passing authenticationError when token is expired", async () => {
+        mockRequest.headers = {
+            authorization: "Bearer expired-token",
+        };
+
+        (auth.verifyIdToken as jest.Mock).mockRejectedValueOnce({
+            code: "auth/id-token-expired",
+            message: "Token expired",
+        });
+    
+        const expectedError: AuthenticationError = new AuthenticationError(
+            "Unauthorized: Token expired",
+            "TOKEN_EXPIRED"
+        );
+    
+        await authenticate(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(expectedError);
+    });
+
+    it("should call next passing authenticationError when token is invalid", async () => {
+        mockRequest.headers = {
+            authorization: "Bearer invalid-token",
+        };
+    
+        (auth.verifyIdToken as jest.Mock).mockRejectedValueOnce({
+            message: "Invalid token",
+        });
+    
+        const expectedError: AuthenticationError = new AuthenticationError(
+            "Unauthorized: Invalid token",
+            "TOKEN_INVALID"
+        );
+    
+        await authenticate(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(expectedError);
+    });
+
+    it("should call next passing authenticationError when Authorization header is missing", async () => {
+        const expectedError: AuthenticationError = new AuthenticationError(
+            "Unauthorized: No token provided",
+            "TOKEN_NOT_FOUND"
+        );
+    
+        await authenticate(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(expectedError);
+    });
+
+    it("should call next passing authenticationError when Firebase service is unavailable", async () => {
+        mockRequest.headers = {
+            authorization: "Bearer mock-token",
+        };
+    
+        (auth.verifyIdToken as jest.Mock).mockRejectedValueOnce(new Error("Firebase service unavailable"));
+    
+        const expectedError: AuthenticationError = new AuthenticationError(
+            "Unauthorized: Firebase service unavailable",
+            "FIREBASE_ERROR"
+        );
+    
+        await authenticate(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(nextFunction).toHaveBeenCalledWith(expectedError);
+    });
+
+    it("should set res.locals and call next() for valid tokens", async () => {
+        mockRequest.headers = {
+            authorization: "Bearer valid-token",
+        };
+    
+        (auth.verifyIdToken as jest.Mock).mockResolvedValueOnce({
+            uid: "valid-uid",
+            role: "user",
+        });
+    
+        await authenticate(
+            mockRequest as Request,
+            mockResponse as Response,
+            nextFunction
+        );
+    
+        expect(auth.verifyIdToken).toHaveBeenCalledWith("valid-token");
+        expect(mockResponse.locals).toEqual({
+            uid: "valid-uid",
+            role: "user",
+        });
+        expect(nextFunction).toHaveBeenCalled();
+    });
 });

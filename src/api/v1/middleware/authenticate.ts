@@ -36,13 +36,20 @@ const authenticate = async (
 
     try {
         const decodedIdToken: DecodedIdToken = await auth.verifyIdToken(token);
-
+    
         res.locals.uid = decodedIdToken.uid;
         res.locals.role = decodedIdToken.role;
-
+    
         next();
-    } catch (error: unknown) {
-        if (error instanceof Error) {
+    } catch (error: any) {
+        if (error.code === "auth/id-token-expired") {
+            return next(
+                new AuthenticationError(
+                    "Unauthorized: Token expired",
+                    "TOKEN_EXPIRED"
+                )
+            );
+        } else if (error instanceof Error) {
             return next(
                 new AuthenticationError(
                     `Unauthorized: ${getErrorMessage(error)}`,
