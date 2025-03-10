@@ -33,6 +33,7 @@ jest.mock("../src/api/v1/middleware/authorize", () =>
     })
 );
 
+
 jest.mock("../src/api/v1/controllers/loanController", () => ({
     applyForLoan: jest.fn((req: Request, res: Response) => {
         res.status(200).json({ message: "Loan application submitted successfully" });

@@ -19,6 +19,7 @@ jest.mock("../src/api/v1/middleware/authorize", () =>
     })
 );
 
+
 jest.mock("../src/api/v1/middleware/authenticate", () =>
     jest.fn((req: Request, res: Response, next: NextFunction) => {
         if (!req.headers["authorization"]) {
