@@ -4,10 +4,18 @@ import request from "supertest";
 import app from "../src/app";
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
-    jest.fn((): (req: Request, res: Response, next: NextFunction) => void => {
-        return (req: Request, res: Response, next: NextFunction): void => {
-            next();
-        };
+    jest.fn(({ hasRole }: { hasRole: string[] }) => (req: Request, res: Response, next: NextFunction) => {
+        const userRole = req.headers["x-roles"];
+
+        if (Array.isArray(userRole)) {
+            if (!userRole.some(role => hasRole.includes(role))) {
+                return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+            }
+        } else if (!userRole || !hasRole.includes(userRole)) {
+            return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+        }
+
+        next();
     })
 );
 
@@ -16,6 +24,11 @@ jest.mock("../src/api/v1/middleware/authenticate", () =>
         if (!req.headers["authorization"]) {
             return res.status(401).json({ error: "Unauthorized" });
         }
+        res.locals = {
+            role: "user",
+            uid: "123",
+        };
+
         next();
     })
 );
@@ -46,6 +59,7 @@ describe("/api/v1/admin/setCustomClaims Route", () => {
         const response = await request(app)
             .post("/api/v1/admin/setCustomClaims")
             .set("authorization", "Bearer token")
+            .set("x-roles", "user")
             .send({ uid: "123", claims: { role: "user" } });
 
         expect(response.status).toBe(403);

@@ -4,16 +4,19 @@ import request from "supertest";
 import app from "../src/app";
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
-    jest.fn(() => (req: Request, res: Response, next: NextFunction) => {
-        if (
-            req.headers["x-roles"] !== "admin" &&
-            req.params.uid !== req.headers["x-uid"]
-        ) {
-            return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
-        }
-        next();
+    jest.fn(() => {
+        return (req: Request, res: Response, next: NextFunction): Response | void => {
+            if (
+                req.headers["x-roles"] !== "admin" &&
+                req.params.uid !== req.headers["x-uid"]
+            ) {
+                return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+            }
+            next();
+        };
     })
 );
+
 
 jest.mock("../src/api/v1/middleware/authenticate", () =>
     jest.fn((req: Request, res: Response, next: NextFunction) => {

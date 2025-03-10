@@ -8,20 +8,18 @@ import {
     approveLoan,
 } from "../src/api/v1/controllers/loanController";
 
-jest.mock("../src/api/v1/middleware/authorize", () =>
-    jest.fn(({ hasRole }: { hasRole: string[] }) => 
-        (req: Request, res: Response, next: NextFunction): Response | void => {
-            if (!req.headers["authorization"]) {
-                return res.status(401).json({ error: "Unauthorized" });
-            }
-            next();
+jest.mock("../src/api/v1/middleware/authenticate", () =>
+    jest.fn((req: Request, res: Response, next: NextFunction) => {
+        if (!req.headers["authorization"]) {
+            return res.status(401).json({ error: "Unauthorized" });
         }
-    )
+        next();
+    })
 );
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
     jest.fn(({ hasRole }: { hasRole: string[] }) => (req: Request, res: Response, next: NextFunction) => {
-        const userRole: string | string[] | undefined = req.headers["x-roles"]; // Explicitly define the type
+        const userRole = req.headers["x-roles"];
 
         if (Array.isArray(userRole)) {
             if (!userRole.some(role => hasRole.includes(role))) {

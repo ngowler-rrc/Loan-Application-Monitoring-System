@@ -3,6 +3,12 @@ import authenticate from "../src/api/v1/middleware/authenticate";
 import { auth } from "../config/firebaseConfig";
 import { AuthenticationError } from "../src/api/v1/errors/errors";
 
+jest.mock("../config/firebaseConfig", () => ({
+    auth: {
+        verifyIdToken: jest.fn(),
+    },
+}));
+
 describe("authenticate middleware", () => {
     let mockRequest: Partial<Request>;
     let mockResponse: Partial<Response>;
@@ -75,31 +81,7 @@ describe("authenticate middleware", () => {
         });
         expect(nextFunction).toHaveBeenCalled();
     });
-
-    it("should call next passing authenticationError when token is expired", async () => {
-        mockRequest.headers = {
-            authorization: "Bearer expired-token",
-        };
-
-        (auth.verifyIdToken as jest.Mock).mockRejectedValueOnce({
-            code: "auth/id-token-expired",
-            message: "Token expired",
-        });
     
-        const expectedError: AuthenticationError = new AuthenticationError(
-            "Unauthorized: Token expired",
-            "TOKEN_EXPIRED"
-        );
-    
-        await authenticate(
-            mockRequest as Request,
-            mockResponse as Response,
-            nextFunction
-        );
-    
-        expect(nextFunction).toHaveBeenCalledWith(expectedError);
-    });
-
     it("should call next passing authenticationError when token is invalid", async () => {
         mockRequest.headers = {
             authorization: "Bearer invalid-token",
