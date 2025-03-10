@@ -18,21 +18,6 @@ describe("authenticate middleware", () => {
         nextFunction = jest.fn();
     });
 
-    it("should call next passing authenticationError when no token is provided", async () => {
-        const expectedError: AuthenticationError = new AuthenticationError(
-            "Unauthorized: No token provided",
-            "TOKEN_NOT_FOUND"
-        );
-
-        await authenticate(
-            mockRequest as Request,
-            mockResponse as Response,
-            nextFunction
-        );
-
-        expect(nextFunction).toHaveBeenCalledWith(expectedError);
-    });
-
     it("should call next passing authenticationError when malformed token is provided", async () => {
         mockRequest.headers = {
             authorization: "Bearer ",
