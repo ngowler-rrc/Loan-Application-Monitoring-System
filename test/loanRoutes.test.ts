@@ -1,23 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import request from "supertest";
 import app from "../src/app";
-import { Server } from "http";
 import {
     applyForLoan,
     reviewLoan,
     getAllLoans,
     approveLoan,
 } from "../src/api/v1/controllers/loanController";
-
-let server: Server;
-
-beforeAll(() => {
-    server = app.listen(0);
-});
-
-afterAll(() => {
-    server.close();
-});
 
 jest.mock("../src/api/v1/middleware/authenticate", () =>
     jest.fn((req: Request, res: Response, next: NextFunction) => {

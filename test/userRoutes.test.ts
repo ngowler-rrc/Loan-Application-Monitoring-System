@@ -2,17 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { getUserDetails } from "../src/api/v1/controllers/userController";
 import request from "supertest";
 import app from "../src/app";
-import { Server } from "http";
-
-let server: Server;
-
-beforeAll(() => {
-    server = app.listen(0);
-});
-
-afterAll(() => {
-    server.close();
-});
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
     jest.fn(() => (req: Request, res: Response, next: NextFunction) => {
