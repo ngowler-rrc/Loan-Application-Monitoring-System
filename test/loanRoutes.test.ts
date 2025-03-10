@@ -8,6 +8,33 @@ import {
     approveLoan,
 } from "../src/api/v1/controllers/loanController";
 
+jest.mock("../src/api/v1/middleware/authorize", () =>
+    jest.fn(({ hasRole }: { hasRole: string[] }): RequestHandler =>
+        (req: Request, res: Response, next: NextFunction): void => {
+            const userRole: string | string[] | undefined = req.headers["x-roles"];
+            const userIdFromHeader: string | undefined = req.headers["x-uid"] as string;
+            const userIdFromParams: string = req.params.uid;
+
+            if (Array.isArray(userRole)) {
+                if (userRole.some(role => hasRole.includes(role))) {
+                    next();
+                    return;
+                }
+            } else if (userRole && hasRole.includes(userRole)) {
+                next();
+                return;
+            }
+
+            if (userIdFromHeader && userIdFromHeader === userIdFromParams) {
+                next();
+                return;
+            }
+
+            res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+        }
+    )
+);
+
 jest.mock("../src/api/v1/middleware/authenticate", () =>
     jest.fn((req: Request, res: Response, next: NextFunction) => {
         if (!req.headers["authorization"]) {
