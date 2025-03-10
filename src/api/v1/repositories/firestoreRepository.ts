@@ -254,7 +254,8 @@ export const deleteDocument = async (
             .collection(collectionName)
             .doc(id);
 
-        const docSnapshot = await docRef.get();
+        const docSnapshot: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData> =
+            await docRef.get();
         if (!docSnapshot.exists) {
             throw new RepositoryError(
                 `Document ${id} does not exist in ${collectionName}`,

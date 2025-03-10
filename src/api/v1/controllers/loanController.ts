@@ -37,7 +37,6 @@ export const applyForLoan = async (
             throw new Error("All required fields must be provided");
         }
 
-        // Prepare loan data (without `id`)
         const loanData: Omit<Loan, 'id'> = {
             borrowerName,
             borrowerEmail,
@@ -49,11 +48,9 @@ export const applyForLoan = async (
             interestRate
         };
 
-        // Let Firestore handle ID generation
-        const id = await createDocument(COLLECTION, loanData);
+        const id: string = await createDocument(COLLECTION, loanData);
 
-        // Add the generated ID to the loan data
-        const responseLoanData = { id, ...loanData };
+        const responseLoanData: Loan = { id, ...loanData };
 
         res.status(HTTP_STATUS.CREATED).json(
             successResponse(responseLoanData, "Loan Application Created")
@@ -78,7 +75,8 @@ export const reviewLoan = async (
 
         await updateDocument(COLLECTION, id, { status: LOAN_STATUS.UNDER_REVIEW });
 
-        const updatedLoanDoc = await getDocumentById(COLLECTION, id);
+        const updatedLoanDoc: firestore.DocumentSnapshot<firestore.DocumentData, firestore.DocumentData> =
+            await getDocumentById(COLLECTION, id);
         const updatedLoan: Loan = updatedLoanDoc.data() as Loan;
 
         res.status(HTTP_STATUS.OK).json(
@@ -111,7 +109,9 @@ export const getAllLoans = async (
         }
 
         const snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData> = await query.get();
-        const loans = snapshot.docs.map((doc) => {
+        const loans: {
+            id: string;
+        }[] = snapshot.docs.map((doc) => {
             const data: FirebaseFirestore.DocumentData = doc.data();
             return { id: doc.id, ...data };
         });
@@ -139,7 +139,8 @@ export const approveLoan = async (
 
         await updateDocument(COLLECTION, id, { status: LOAN_STATUS.APPROVED });
 
-        const updatedLoanDoc = await getDocumentById(COLLECTION, id);
+        const updatedLoanDoc: firestore.DocumentSnapshot<firestore.DocumentData, firestore.DocumentData> =
+            await getDocumentById(COLLECTION, id);
         const updatedLoan: Loan = updatedLoanDoc.data() as Loan;
 
         res.status(HTTP_STATUS.OK).json(

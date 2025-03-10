@@ -8,19 +8,21 @@ import {
     approveLoan,
 } from "../src/api/v1/controllers/loanController";
 
-jest.mock("../src/api/v1/middleware/authenticate", () =>
-    jest.fn((req: Request, res: Response, next: NextFunction) => {
-        if (!req.headers["authorization"]) {
-            return res.status(401).json({ error: "Unauthorized" });
+jest.mock("../src/api/v1/middleware/authorize", () =>
+    jest.fn(({ hasRole }: { hasRole: string[] }) => 
+        (req: Request, res: Response, next: NextFunction): Response | void => {
+            if (!req.headers["authorization"]) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            next();
         }
-        next();
-    })
+    )
 );
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
     jest.fn(({ hasRole }: { hasRole: string[] }) => (req: Request, res: Response, next: NextFunction) => {
-        const userRole = req.headers["x-roles"];
-        
+        const userRole: string | string[] | undefined = req.headers["x-roles"]; // Explicitly define the type
+
         if (Array.isArray(userRole)) {
             if (!userRole.some(role => hasRole.includes(role))) {
                 return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
@@ -32,7 +34,6 @@ jest.mock("../src/api/v1/middleware/authorize", () =>
         next();
     })
 );
-
 
 jest.mock("../src/api/v1/controllers/loanController", () => ({
     applyForLoan: jest.fn((req: Request, res: Response) => {
@@ -52,6 +53,7 @@ jest.mock("../src/api/v1/controllers/loanController", () => ({
 describe("/api/v1/loans Routes", () => {
     describe("POST /api/v1/loans", () => {
         it("should allow a user to apply for a loan", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .post("/api/v1/loans")
                 .set("authorization", "Bearer token")
@@ -64,6 +66,7 @@ describe("/api/v1/loans Routes", () => {
         });
 
         it("should deny access if user lacks necessary role", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .post("/api/v1/loans")
                 .set("authorization", "Bearer token")
@@ -76,6 +79,7 @@ describe("/api/v1/loans Routes", () => {
         });
 
         it("should return an error if authentication fails", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .post("/api/v1/loans")
                 .send({ loanAmount: 5000, loanPurpose: "Business" });
@@ -88,6 +92,7 @@ describe("/api/v1/loans Routes", () => {
 
     describe("PUT /api/v1/loans/:id/review", () => {
         it("should allow an officer to review a loan", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .put("/api/v1/loans/123/review")
                 .set("authorization", "Bearer token")
@@ -100,6 +105,7 @@ describe("/api/v1/loans Routes", () => {
         });
 
         it("should deny access if the user does not have officer role", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .put("/api/v1/loans/123/review")
                 .set("authorization", "Bearer token")
@@ -114,6 +120,7 @@ describe("/api/v1/loans Routes", () => {
 
     describe("GET /api/v1/loans", () => {
         it("should allow an officer or manager to view all loans", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .get("/api/v1/loans")
                 .set("authorization", "Bearer token")
@@ -125,6 +132,7 @@ describe("/api/v1/loans Routes", () => {
         });
 
         it("should deny access if user lacks necessary roles", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .get("/api/v1/loans")
                 .set("authorization", "Bearer token")
@@ -138,6 +146,7 @@ describe("/api/v1/loans Routes", () => {
 
     describe("PUT /api/v1/loans/:id/approve", () => {
         it("should allow a manager to approve a loan", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .put("/api/v1/loans/123/approve")
                 .set("authorization", "Bearer token")
@@ -150,6 +159,7 @@ describe("/api/v1/loans Routes", () => {
         });
 
         it("should deny access if user does not have manager role", async () => {
+            // eslint-disable-next-line @typescript-eslint/typedef
             const response = await request(app)
                 .put("/api/v1/loans/123/approve")
                 .set("authorization", "Bearer token")

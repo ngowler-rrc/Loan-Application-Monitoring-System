@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import isAuthorized from "../src/api/v1/middleware/authorize";
 import { AuthorizationError } from "../src/api/v1/errors/errors";
+import { MiddlewareFunction } from "src/api/v1/types/expressTypes";
 
 
 describe("isAuthorized middleware", () => {
@@ -24,7 +25,7 @@ describe("isAuthorized middleware", () => {
             role: "admin",
         };
 
-        const middleware = isAuthorized({ hasRole: ["admin", "manager"] });
+        const middleware: MiddlewareFunction = isAuthorized({ hasRole: ["admin", "manager"] });
 
         middleware(
             mockRequest as Request,
@@ -42,7 +43,7 @@ describe("isAuthorized middleware", () => {
             role: "user",
         };
 
-        const middleware = isAuthorized({
+        const middleware: MiddlewareFunction = isAuthorized({
             hasRole: ["admin"],
             allowSameUser: true,
         });
@@ -61,7 +62,7 @@ describe("isAuthorized middleware", () => {
             uid: "user123",
         };
     
-        const middleware = isAuthorized({ hasRole: ["admin"] });
+        const middleware: MiddlewareFunction = isAuthorized({ hasRole: ["admin"] });
     
         middleware(
             mockRequest as Request,
@@ -80,7 +81,7 @@ describe("isAuthorized middleware", () => {
             role: "user",
         };
     
-        const middleware = isAuthorized({ hasRole: ["admin", "manager"] });
+        const middleware: MiddlewareFunction = isAuthorized({ hasRole: ["admin", "manager"] });
     
         middleware(
             mockRequest as Request,
@@ -100,7 +101,7 @@ describe("isAuthorized middleware", () => {
             role: "user",
         };
     
-        const middleware = isAuthorized({
+        const middleware: MiddlewareFunction = isAuthorized({
             hasRole: ["admin"],
             allowSameUser: true,
         });
@@ -123,7 +124,7 @@ describe("isAuthorized middleware", () => {
             role: "user",
         };
     
-        const middleware = isAuthorized({ hasRole: ["admin"], allowSameUser: true });
+        const middleware: MiddlewareFunction = isAuthorized({ hasRole: ["admin"], allowSameUser: true });
     
         middleware(
             mockRequest as Request,
@@ -142,7 +143,7 @@ describe("isAuthorized middleware", () => {
             uid: "user123",
         };
     
-        const middleware = isAuthorized({ allowSameUser: true, hasRole: [] });
+        const middleware: MiddlewareFunction = isAuthorized({ allowSameUser: true, hasRole: [] });
     
         middleware(
             mockRequest as Request,
