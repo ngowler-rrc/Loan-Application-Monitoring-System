@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler  } from "express";
 import request from "supertest";
 import app from "../src/app";
 import {
@@ -18,19 +18,23 @@ jest.mock("../src/api/v1/middleware/authenticate", () =>
 );
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
-    jest.fn(({ hasRole }: { hasRole: string[] }) => (req: Request, res: Response, next: NextFunction) => {
-        const userRole: string | string[] | undefined = req.headers["x-roles"];
+    jest.fn(({ hasRole }: { hasRole: string[] }): RequestHandler =>
+        (req: Request, res: Response, next: NextFunction): void => {
+            const userRole: string | string[] | undefined = req.headers["x-roles"];
 
-        if (Array.isArray(userRole)) {
-            if (!userRole.some(role => hasRole.includes(role))) {
-                return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+            if (Array.isArray(userRole)) {
+                if (!userRole.some(role => hasRole.includes(role))) {
+                    res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+                    return;
+                }
+            } else if (!userRole || !hasRole.includes(userRole)) {
+                res.status(403).json({ error: "Forbidden: Insufficient permissions" });
+                return;
             }
-        } else if (!userRole || !hasRole.includes(userRole)) {
-            return res.status(403).json({ error: "Forbidden: Insufficient permissions" });
-        }
 
-        next();
-    })
+            next();
+        }
+    )
 );
 
 
