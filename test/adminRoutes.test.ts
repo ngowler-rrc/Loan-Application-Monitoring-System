@@ -5,7 +5,7 @@ import app from "../src/app";
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
     jest.fn(({ hasRole }: { hasRole: string[] }) => (req: Request, res: Response, next: NextFunction) => {
-        const userRole = req.headers["x-roles"];
+        const userRole: string | string[] | undefined = req.headers["x-roles"];
 
         if (Array.isArray(userRole)) {
             if (!userRole.some(role => hasRole.includes(role))) {
