@@ -2,6 +2,17 @@ import { Request, Response, NextFunction } from "express";
 import { setCustomClaims } from "../src/api/v1/controllers/adminController";
 import request from "supertest";
 import app from "../src/app";
+import { Server } from "http";
+
+let server: Server;
+
+beforeAll(() => {
+    server = app.listen(0);
+});
+
+afterAll(() => {
+    server.close();
+});
 
 jest.mock("../src/api/v1/middleware/authorize", () =>
     jest.fn(() => (req: Request, res: Response, next: NextFunction) => {
@@ -30,10 +41,10 @@ jest.mock("../src/api/v1/controllers/adminController", () => ({
 describe("/api/v1/admin/setCustomClaims Route", () => {
     it("should allow access for an admin user and call the controller", async () => {
         const response = await request(app)
-        .post("/api/v1/admin/setCustomClaims")
-        .set("authorization", "Bearer token")
-        .set("x-roles", "admin")
-        .send({ uid: "123", claims: { role: "admin" } });
+            .post("/api/v1/admin/setCustomClaims")
+            .set("authorization", "Bearer token")
+            .set("x-roles", "admin")
+            .send({ uid: "123", claims: { role: "admin" } });
 
         expect(response.status).toBe(200);
         expect(response.body.message).toBe("Claims set successfully");
@@ -42,9 +53,9 @@ describe("/api/v1/admin/setCustomClaims Route", () => {
 
     it("should deny access if user lacks the admin role", async () => {
         const response = await request(app)
-        .post("/api/v1/admin/setCustomClaims")
-        .set("authorization", "Bearer token")
-        .send({ uid: "123", claims: { role: "user" } });
+            .post("/api/v1/admin/setCustomClaims")
+            .set("authorization", "Bearer token")
+            .send({ uid: "123", claims: { role: "user" } });
 
         expect(response.status).toBe(403);
         expect(response.body.error).toBe("Forbidden: Insufficient permissions");
@@ -66,7 +77,7 @@ describe("/api/v1/admin/setCustomClaims Route", () => {
         const response = await request(app)
             .post("/api/v1/admin/setCustomClaims")
             .send({ uid: "123", claims: { role: "user" } });
-    
+
         expect(response.status).toBe(401);
         expect(response.body.error).toBe("Unauthorized");
         expect(setCustomClaims).not.toHaveBeenCalled();
