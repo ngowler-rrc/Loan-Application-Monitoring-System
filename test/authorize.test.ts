@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import isAuthorized from "../src/api/v1/middleware/authorize";
 import { AuthorizationError } from "../src/api/v1/errors/errors";
-import authenticate from "../src/api/v1/middleware/authenticate";
-import { auth } from "../config/firebaseConfig";
 
 
 describe("isAuthorized middleware", () => {
